@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CRUD de Motos</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 2rem auto;
+      padding: 1rem;
+    }
+    input, button {
+      display: block;
+      width: 100%;
+      margin: 0.3rem 0;
+      padding: 0.5rem;
+    }
+    .moto {
+      border: 1px solid #ccc;
+      padding: 1rem;
+      margin: 1rem 0;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+    }
+    button {
+      cursor: pointer;
+    }
+    .acciones {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Gestión de Motos 🏍️</h1>
+
+  <h2>Agregar Moto</h2>
+  <input type="text" id="marca" placeholder="Marca" />
+  <input type="text" id="modelo" placeholder="Modelo" />
+  <input type="number" id="cilindraje" placeholder="Cilindraje" />
+  <input type="number" id="precio" placeholder="Precio" step="0.01" />
+  <button onclick="crearMoto()">Agregar</button>
+
+  <h2>Listado de Motos</h2>
+  <div id="lista-motos"></div>
+
+  <script>
+    const API_URL = 'http://localhost:3000/motos';
+
+    async function obtenerMotos() {
+      const res = await fetch(API_URL);
+      const motos = await res.json();
+      const contenedor = document.getElementById('lista-motos');
+      contenedor.innerHTML = '';
+      motos.forEach(moto => {
+        contenedor.innerHTML += `
+          <div class="moto">
+            <p><strong>ID:</strong> ${moto.id}</p>
+            <p><strong>Marca:</strong> ${moto.marca}</p>
+            <p><strong>Modelo:</strong> ${moto.modelo}</p>
+            <p><strong>Cilindraje:</strong> ${moto.cilindraje} cc</p>
+            <p><strong>Precio:</strong> $${moto.precio}</p>
+            <div class="acciones">
+              <button onclick="mostrarFormularioEdicion(${moto.id}, '${moto.marca}', '${moto.modelo}', ${moto.cilindraje}, ${moto.precio})">Editar</button>
+              <button onclick="eliminarMoto(${moto.id})">Eliminar</button>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    async function crearMoto() {
+      const marca = document.getElementById('marca').value.trim();
+      const modelo = document.getElementById('modelo').value.trim();
+      const cilindraje = document.getElementById('cilindraje').value.trim();
+      const precio = document.getElementById('precio').value.trim();
+
+      if (!marca || !modelo || !cilindraje || !precio) return alert('Todos los campos son obligatorios');
+
+      await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ marca, modelo, cilindraje, precio })
+      });
+
+      document.getElementById('marca').value = '';
+      document.getElementById('modelo').value = '';
+      document.getElementById('cilindraje').value = '';
+      document.getElementById('precio').value = '';
+      obtenerMotos();
+    }
+
+    async function eliminarMoto(id) {
+      await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+      obtenerMotos();
+    }
+
+    function mostrarFormularioEdicion(id, marca, modelo, cilindraje, precio) {
+      const contenedor = document.getElementById('lista-motos');
+      contenedor.innerHTML = `
+        <div class="moto">
+          <h3>Editar Moto (ID: ${id})</h3>
+          <input type="text" id="editar-marca" value="${marca}" />
+          <input type="text" id="editar-modelo" value="${modelo}" />
+          <input type="number" id="editar-cilindraje" value="${cilindraje}" />
+          <input type="number" id="editar-precio" value="${precio}" step="0.01" />
+          <div class="acciones">
+            <button onclick="actualizarMoto(${id})">Guardar</button>
+            <button onclick="obtenerMotos()">Cancelar</button>
+          </div>
+        </div>
+      `;
+    }
+
+    async function actualizarMoto(id) {
+      const marca = document.getElementById('editar-marca').value.trim();
+      const modelo = document.getElementById('editar-modelo').value.trim();
+      const cilindraje = document.getElementById('editar-cilindraje').value.trim();
+      const precio = document.getElementById('editar-precio').value.trim();
+
+      if (!marca || !modelo || !cilindraje || !precio) return alert('Todos los campos son obligatorios');
+
+      await fetch(`${API_URL}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ marca, modelo, cilindraje, precio })
+      });
+
+      obtenerMotos();
+    }
+
+    obtenerMotos();
+  </script>
+</body>
+</html>
